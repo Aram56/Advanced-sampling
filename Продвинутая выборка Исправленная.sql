@@ -22,22 +22,23 @@ ORDER BY AVG(duration_track);
 
 --4. все исполнители, которые не выпустили альбомы в 2020 году;
 
-SELECT name_performer FROM Performer p
-JOIN AlbumPerformer ap ON p.id = ap.performer_id
-JOIN Album a ON ap.album_id = a.id
-WHERE a.release_year_album != 2020
-GROUP BY name_performer;
+SELECT name_performer FROM Performer
+WHERE name_performer NOT IN (SELECT DISTINCT name_performer FROM Performer p
+							JOIN AlbumPerformer ap ON p.id = ap.performer_id
+							JOIN Album a ON ap.album_id = a.id
+							WHERE a.release_year_album = 2020);
 
+	
 --5. названия сборников, в которых присутствует конкретный исполнитель (выберите сами);
 
-SELECT name_compilation FROM Compilation c
+SELECT DISTINCT name_compilation FROM Compilation c
 JOIN TrackCompilation tc ON c.id = tc.compilation_id 
 JOIN Track t ON tc.track_id = t.id 
 JOIN Album a ON t.album_id = a.id 
 JOIN AlbumPerformer ap ON a.id = ap.album_id
 JOIN Performer p ON ap.performer_id = p.id
-WHERE name_performer = 'Король и Шут'
-GROUP BY name_compilation;
+WHERE name_performer = 'Король и Шут';
+
 
 --6. название альбомов, в которых присутствуют исполнители более 1 жанра;
 
@@ -54,8 +55,8 @@ HAVING COUNT(g.id) >1;
 SELECT name_track FROM Track t
 LEFT JOIN TrackCompilation tc ON t.id = tc.track_id
 LEFT JOIN Compilation c ON tc.compilation_id = c.id 
-WHERE c.id IS NULL
-GROUP BY t.name_track;
+WHERE c.id IS NULL;
+
 
 --8. исполнителя(-ей), написавшего самый короткий по продолжительности трек 
 --(теоретически таких треков может быть несколько);
@@ -64,13 +65,13 @@ SELECT name_performer FROM Performer p
 JOIN AlbumPerformer ap ON p.id = ap.performer_id
 JOIN Album a ON ap.album_id = a.id
 JOIN Track t ON a.id = t.album_id
-WHERE duration_track = (SELECT MIN(duration_track) FROM Track)
-GROUP BY name_performer;
+WHERE duration_track = (SELECT MIN(duration_track) FROM Track);
+
 
 --9. название альбомов, содержащих наименьшее количество треков.
 
 SELECT name_album FROM album a
-INNER JOIN track t ON a.id = t.album_id
+JOIN track t ON a.id = t.album_id
 GROUP BY name_album
 HAVING COUNT(name_track) = (SELECT COUNT(name_track) c FROM album a
                    INNER JOIN track t ON a.id = t.album_id
